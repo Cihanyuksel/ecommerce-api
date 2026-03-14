@@ -14,4 +14,7 @@
     <ProjectReference Include="../Product.Domain/Product.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
+  </ItemGroup>
 </Project>
