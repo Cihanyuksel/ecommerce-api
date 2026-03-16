@@ -61,4 +61,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await Auth.Infrastructure.Persistence.DatabaseSeeder.SeedRolesAndAdminAsync(services);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Veritabanı tohumlama sırasında hata oluştu: {ex.Message}");
+    }
+}
+
 app.Run();
