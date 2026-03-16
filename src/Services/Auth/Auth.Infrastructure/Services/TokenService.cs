@@ -1,4 +1,3 @@
-// YENİ EKLENDİ: IConfiguration ve JWT kütüphanesi bağımlılıkları sadece burada (Infrastructure) yer alıyor.
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;

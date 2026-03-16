@@ -1,19 +1,22 @@
 using MediatR;
-using MassTransit; 
+using MassTransit;
+using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces;
-using Product.Application.Events; 
+using Product.Application.Events;
 
 namespace Product.Application.Features.Products.Commands.UpdateProduct;
 
 public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, bool>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IPublishEndpoint _publishEndpoint; 
+    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IDistributedCache _cache;
 
-    public UpdateProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint) 
+    public UpdateProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint, IDistributedCache cache)
     {
         _context = context;
-        _publishEndpoint = publishEndpoint; 
+        _publishEndpoint = publishEndpoint;
+        _cache = cache;
     }
 
     public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -27,7 +30,9 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         product.Stock = request.Stock;
 
         await _context.SaveChangesAsync(cancellationToken);
-        
+
+        await _cache.RemoveAsync("all_products", cancellationToken);
+
         await _publishEndpoint.Publish(new ProductUpdatedEvent
         {
             Id = product.Id,

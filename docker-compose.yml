@@ -22,3 +22,17 @@ services:
       - "5672:5672"   
       - "15672:15672" 
     restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: ecommerce-redis
+    ports:
+    - "6379:6379"
+    restart: unless-stopped
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: ecommerce-redisinsight
+    ports:
+      - "8001:5540" 
+    restart: unless-stopped

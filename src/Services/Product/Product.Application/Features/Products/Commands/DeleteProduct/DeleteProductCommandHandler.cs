@@ -1,5 +1,6 @@
 using MediatR;
 using MassTransit;
+using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces;
 using Product.Application.Events;
 
@@ -9,11 +10,13 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IDistributedCache _cache;
 
-    public DeleteProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint)
+    public DeleteProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint, IDistributedCache cache)
     {
         _context = context;
         _publishEndpoint = publishEndpoint;
+        _cache = cache;
     }
 
     public async Task<bool> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -24,6 +27,8 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveAsync("all_products", cancellationToken);
 
         await _publishEndpoint.Publish(new ProductDeletedEvent
         {
