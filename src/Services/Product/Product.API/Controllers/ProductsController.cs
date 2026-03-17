@@ -65,3 +65,4 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Ürün başarıyla silindi!" });
     }
 }
+
