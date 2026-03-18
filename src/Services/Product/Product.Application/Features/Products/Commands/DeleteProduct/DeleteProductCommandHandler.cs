@@ -23,17 +23,15 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
     {
         var product = await _context.Products.FindAsync(new object[] { request.Id }, cancellationToken);
 
-        if (product == null) return false;
+        if (product == null)
+            throw new KeyNotFoundException($"Silinecek ürün bulunamadı. (ID: {request.Id})");
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveAsync("all_products", cancellationToken);
 
-        await _publishEndpoint.Publish(new ProductDeletedEvent
-        {
-            Id = product.Id
-        }, cancellationToken);
+        await _publishEndpoint.Publish(new ProductDeletedEvent { Id = product.Id }, cancellationToken);
 
         return true;
     }

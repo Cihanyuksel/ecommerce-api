@@ -24,7 +24,7 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductCommand command)
     {
         var productId = await _mediator.Send(command);
-        return Created("", new { id = productId, message = "Ürün başarıyla oluşturuldu!" });
+        return Created(" ", new { id = productId, message = "Ürün başarıyla oluşturuldu!" });
     }
 
     [HttpGet]
@@ -37,18 +37,16 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+
+
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductCommand command)
     {
         if (id != command.Id)
-            return BadRequest("URL'deki ID ile gönderilen verideki ID uyuşmuyor.");
+            throw new ArgumentException("URL'deki ID ile gönderilen verideki ID uyuşmuyor.");
 
-        var result = await _mediator.Send(command);
-
-        if (!result)
-            return NotFound("Güncellenecek ürün bulunamadı.");
-
+        await _mediator.Send(command);
         return Ok(new { message = "Ürün başarıyla güncellendi!" });
     }
 
@@ -56,12 +54,7 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteProduct(Guid id)
     {
-        var command = new DeleteProductCommand { Id = id };
-        var result = await _mediator.Send(command);
-
-        if (!result)
-            return NotFound("Silinecek ürün bulunamadı.");
-
+        await _mediator.Send(new DeleteProductCommand { Id = id });
         return Ok(new { message = "Ürün başarıyla silindi!" });
     }
 }

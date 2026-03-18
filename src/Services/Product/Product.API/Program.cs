@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Log.API.Events;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,8 +94,59 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<Product.API.Middleware.ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var publishEndpoint = services.GetRequiredService<IPublishEndpoint>();
+
+    try
+    {
+        var context = services.GetRequiredService<ProductDbContext>();
+        var canConnect = await context.Database.CanConnectAsync();
+
+        if (!canConnect)
+        {
+            throw new Exception("SQL Server yanıt vermiyor!");
+        }
+    }
+    catch (Exception ex)
+    {
+        await publishEndpoint.Publish(new LogEventMessage
+        {
+            ServiceName = "Product.API",
+            LogLevel = AppLogLevel.Critical,
+            Message = "CRITICAL: Product Veritabanına bağlanılamadı!",
+            ExceptionMessage = ex.Message,
+            Timestamp = DateTime.UtcNow
+        });
+        Console.WriteLine($"💥 Kritik Hata: Veritabanına ulaşılamıyor. {ex.Message}");
+    }
+
+    try
+    {
+        var cache = services.GetRequiredService<IDistributedCache>();
+
+        await cache.GetStringAsync("ping_test");
+    }
+    catch (Exception ex)
+    {
+        await publishEndpoint.Publish(new LogEventMessage
+        {
+            ServiceName = "Product.API",
+            LogLevel = AppLogLevel.Critical,
+            Message = "CRITICAL: Redis Önbellek (Cache) sunucusuna bağlanılamadı!",
+            ExceptionMessage = ex.Message,
+            Timestamp = DateTime.UtcNow
+        });
+        Console.WriteLine($"Redis sunucusuna ulaşılamıyor! {ex.Message}");
+    }
+}
+
 app.Run();
+
