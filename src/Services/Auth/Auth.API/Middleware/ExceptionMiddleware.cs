@@ -1,5 +1,5 @@
 using MassTransit;
-using Log.API.Events;
+using Shared.Events;
 using System.Net;
 using System.Text.Json;
 

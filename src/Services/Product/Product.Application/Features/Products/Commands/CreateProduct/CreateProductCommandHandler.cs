@@ -3,7 +3,7 @@ using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces;
 using Product.Application.Events;
-using Log.API.Events;
+using Shared.Events;
 using ProductEntity = Product.Domain.Entities.Product;
 
 namespace Product.Application.Features.Products.Commands.CreateProduct;

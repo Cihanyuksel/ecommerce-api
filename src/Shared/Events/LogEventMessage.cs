@@ -1,4 +1,4 @@
-namespace Log.API.Events; 
+namespace Shared.Events;
 
 public enum AppLogLevel { Info, Warning, Error, Critical }
 

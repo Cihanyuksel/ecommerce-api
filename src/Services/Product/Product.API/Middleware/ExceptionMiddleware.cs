@@ -1,4 +1,4 @@
-using Log.API.Events;
+using Shared.Events;
 using MassTransit;
 using System.Net;
 using System.Text.Json;
