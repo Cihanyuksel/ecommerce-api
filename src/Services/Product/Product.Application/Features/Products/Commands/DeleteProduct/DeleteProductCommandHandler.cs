@@ -3,6 +3,7 @@ using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces;
 using Product.Application.Events;
+using Product.Domain.Exceptions;
 
 namespace Product.Application.Features.Products.Commands.DeleteProduct;
 
@@ -24,7 +25,7 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
         var product = await _context.Products.FindAsync(new object[] { request.Id }, cancellationToken);
 
         if (product == null)
-            throw new KeyNotFoundException($"Silinecek ürün bulunamadı. (ID: {request.Id})");
+            throw new NotFoundException($"Silinecek ürün bulunamadı. (ID: {request.Id})");
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync(cancellationToken);

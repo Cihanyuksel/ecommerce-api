@@ -5,6 +5,7 @@ using Product.Application.Features.Products.Commands.CreateProduct;
 using Product.Application.Features.Products.Queries.GetProducts;
 using Product.Application.Features.Products.Commands.UpdateProduct;
 using Product.Application.Features.Products.Commands.DeleteProduct;
+using Product.Domain.Exceptions;
 
 namespace Product.API.Controllers;
 
@@ -38,13 +39,12 @@ public class ProductsController : ControllerBase
     }
 
 
-
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductCommand command)
     {
         if (id != command.Id)
-            throw new ArgumentException("URL'deki ID ile gönderilen verideki ID uyuşmuyor.");
+            throw new ValidationException("URL'deki ID ile gönderilen verideki ID uyuşmuyor.");
 
         await _mediator.Send(command);
         return Ok(new { message = "Ürün başarıyla güncellendi!" });

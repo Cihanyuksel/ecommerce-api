@@ -2,6 +2,7 @@ using Shared.Events;
 using MassTransit;
 using System.Net;
 using System.Text.Json;
+using Product.Domain.Exceptions;
 
 namespace Product.API.Middleware;
 
@@ -33,12 +34,14 @@ public class ExceptionMiddleware
         var correlationId = context.Request.Headers["X-Correlation-Id"].FirstOrDefault()
                             ?? Guid.NewGuid().ToString();
 
-        var logLevel = ex is KeyNotFoundException or ArgumentException
-            ? AppLogLevel.Warning
-            : AppLogLevel.Error;
+        var logLevel = ex switch
+        {
+            NotFoundException => AppLogLevel.Warning,
+            ValidationException => AppLogLevel.Error,
+            _ => AppLogLevel.Error
+        };
 
         var publishEndpoint = context.RequestServices.GetRequiredService<IPublishEndpoint>();
-
         await publishEndpoint.Publish(new LogEventMessage
         {
             ServiceName = "Product.API",
@@ -52,9 +55,8 @@ public class ExceptionMiddleware
 
         var statusCode = ex switch
         {
-            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-            ArgumentException => HttpStatusCode.BadRequest,
-            KeyNotFoundException => HttpStatusCode.NotFound,
+            NotFoundException => HttpStatusCode.NotFound,
+            ValidationException => HttpStatusCode.BadRequest,
             _ => HttpStatusCode.InternalServerError
         };
 

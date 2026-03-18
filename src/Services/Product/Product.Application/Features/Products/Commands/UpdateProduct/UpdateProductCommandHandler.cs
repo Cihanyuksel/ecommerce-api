@@ -3,6 +3,7 @@ using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces;
 using Product.Application.Events;
+using Product.Domain.Exceptions;
 
 namespace Product.Application.Features.Products.Commands.UpdateProduct;
 
@@ -24,7 +25,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         var product = await _context.Products.FindAsync(new object[] { request.Id }, cancellationToken);
 
         if (product == null)
-            throw new KeyNotFoundException($"Güncellenecek ürün bulunamadı. (ID: {request.Id})");
+            throw new NotFoundException($"Güncellenecek ürün bulunamadı. (ID: {request.Id})");
 
         product.Name = request.Name;
         product.Price = request.Price;
