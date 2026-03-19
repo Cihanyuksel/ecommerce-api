@@ -1,7 +1,7 @@
 using MediatR;
 using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
-using Product.Application.Interfaces;
+using Product.Application.Interfaces.Repositories;
 using Product.Application.Events;
 using Shared.Events;
 using ProductEntity = Product.Domain.Entities.Product;
@@ -10,13 +10,13 @@ namespace Product.Application.Features.Products.Commands.CreateProduct;
 
 public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Guid>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IProductRepository _repository;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IDistributedCache _cache;
 
-    public CreateProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint, IDistributedCache cache)
+    public CreateProductCommandHandler(IProductRepository repository, IPublishEndpoint publishEndpoint, IDistributedCache cache)
     {
-        _context = context;
+        _repository = repository;
         _publishEndpoint = publishEndpoint;
         _cache = cache;
     }
@@ -32,8 +32,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Products.Add(newProduct);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _repository.AddAsync(newProduct, cancellationToken);
 
         await _cache.RemoveAsync("all_products", cancellationToken);
 

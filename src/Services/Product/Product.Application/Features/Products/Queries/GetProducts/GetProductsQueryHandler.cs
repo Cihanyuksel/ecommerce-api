@@ -1,21 +1,20 @@
 using System.Text.Json;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
-using Product.Application.Interfaces;
+using Product.Application.Interfaces.Repositories;
 using ProductEntity = Product.Domain.Entities.Product;
 
 namespace Product.Application.Features.Products.Queries.GetProducts;
 
 public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<ProductEntity>>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IProductRepository _repository;
     private readonly IDistributedCache _cache;
     private const string CacheKey = "all_products";
 
-    public GetProductsQueryHandler(IApplicationDbContext context, IDistributedCache cache)
+    public GetProductsQueryHandler(IProductRepository repository, IDistributedCache cache)
     {
-        _context = context;
+        _repository = repository;
         _cache = cache;
     }
 
@@ -28,18 +27,18 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
             return JsonSerializer.Deserialize<List<ProductEntity>>(cachedProducts)!;
         }
 
-        var products = await _context.Products
-                                     .AsNoTracking()
-                                     .ToListAsync(cancellationToken);
+        var products = await _repository.GetAllAsync(cancellationToken);
+
+        var productList = products.ToList();
 
         var cacheOptions = new DistributedCacheEntryOptions()
             .SetAbsoluteExpiration(TimeSpan.FromHours(1))
             .SetSlidingExpiration(TimeSpan.FromMinutes(15));
 
-        var serializedProducts = JsonSerializer.Serialize(products);
+        var serializedProducts = JsonSerializer.Serialize(productList);
 
         await _cache.SetStringAsync(CacheKey, serializedProducts, cacheOptions, cancellationToken);
 
-        return products;
+        return productList;
     }
 }

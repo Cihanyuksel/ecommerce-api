@@ -1,7 +1,7 @@
 using MediatR;
 using MassTransit;
 using Microsoft.Extensions.Caching.Distributed;
-using Product.Application.Interfaces;
+using Product.Application.Interfaces.Repositories;
 using Product.Application.Events;
 using Product.Domain.Exceptions;
 
@@ -9,20 +9,20 @@ namespace Product.Application.Features.Products.Commands.UpdateProduct;
 
 public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, bool>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IProductRepository _repository;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IDistributedCache _cache;
 
-    public UpdateProductCommandHandler(IApplicationDbContext context, IPublishEndpoint publishEndpoint, IDistributedCache cache)
+    public UpdateProductCommandHandler(IProductRepository repository, IPublishEndpoint publishEndpoint, IDistributedCache cache)
     {
-        _context = context;
+        _repository = repository;
         _publishEndpoint = publishEndpoint;
         _cache = cache;
     }
 
     public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await _context.Products.FindAsync(new object[] { request.Id }, cancellationToken);
+        var product = await _repository.GetByIdAsync(request.Id, cancellationToken);
 
         if (product == null)
             throw new NotFoundException($"Güncellenecek ürün bulunamadı. (ID: {request.Id})");
@@ -31,7 +31,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         product.Price = request.Price;
         product.Stock = request.Stock;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _repository.UpdateAsync(product, cancellationToken);
 
         await _cache.RemoveAsync("all_products", cancellationToken);
 

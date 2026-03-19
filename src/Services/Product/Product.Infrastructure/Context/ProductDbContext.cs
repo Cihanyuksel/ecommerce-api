@@ -1,23 +1,22 @@
 using Microsoft.EntityFrameworkCore;
-using Product.Application.Interfaces;
+using ProductEntity = Product.Domain.Entities.Product;
 
 namespace Product.Infrastructure.Persistence;
 
-public class ProductDbContext : DbContext, IApplicationDbContext
+public class ProductDbContext : DbContext
 {
     public ProductDbContext(DbContextOptions<ProductDbContext> options) : base(options)
     {
     }
 
-    public DbSet<global::Product.Domain.Entities.Product> Products { get; set; }
+    public DbSet<ProductEntity> Products { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<global::Product.Domain.Entities.Product>()
+        modelBuilder.Entity<ProductEntity>()
             .Property(p => p.Price)
             .HasColumnType("decimal(18,2)");
     }
 }
-

@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Product.Application.Features.Products.Commands.CreateProduct;
 using Product.Application.Features.Products.Queries.GetProducts;
+using Product.Application.Features.Products.Queries.GetProductById;
 using Product.Application.Features.Products.Commands.UpdateProduct;
 using Product.Application.Features.Products.Commands.DeleteProduct;
-using Product.Domain.Exceptions;
 
 namespace Product.API.Controllers;
 
@@ -38,13 +38,21 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetProductById(Guid id)
+    {
+        var query = new GetProductByIdQuery { Id = id };
+        var product = await _mediator.Send(query);
+
+        return Ok(product);
+    }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductCommand command)
     {
-        if (id != command.Id)
-            throw new ValidationException("URL'deki ID ile gönderilen verideki ID uyuşmuyor.");
+        command.Id = id;
 
         await _mediator.Send(command);
         return Ok(new { message = "Ürün başarıyla güncellendi!" });
@@ -58,4 +66,3 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Ürün başarıyla silindi!" });
     }
 }
-
