@@ -1,3 +1,4 @@
+using Auth.Domain.Exceptions;
 using MassTransit;
 using Shared.Events;
 using System.Net;
@@ -33,7 +34,7 @@ public class ExceptionMiddleware
         var correlationId = context.Request.Headers["X-Correlation-Id"].FirstOrDefault()
                             ?? Guid.NewGuid().ToString();
 
-        var logLevel = ex is UnauthorizedAccessException
+        var logLevel = ex is UnauthorizedException or BadRequestException or ArgumentException
             ? AppLogLevel.Warning
             : AppLogLevel.Error;
 
@@ -52,7 +53,8 @@ public class ExceptionMiddleware
 
         var statusCode = ex switch
         {
-            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
+            UnauthorizedException => HttpStatusCode.Unauthorized,
+            BadRequestException => HttpStatusCode.BadRequest,
             ArgumentException => HttpStatusCode.BadRequest,
             KeyNotFoundException => HttpStatusCode.NotFound,
             _ => HttpStatusCode.InternalServerError
@@ -62,8 +64,6 @@ public class ExceptionMiddleware
         context.Response.StatusCode = (int)statusCode;
         context.Response.Headers["X-Correlation-Id"] = correlationId;
 
-        var response = new { error = ex.Message, correlationId };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message, correlationId }));
     }
 }

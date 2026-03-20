@@ -1,4 +1,5 @@
 using Auth.Domain.Entities;
+using Auth.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
@@ -17,6 +18,10 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, s
 
     public async Task<string> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
+        var existingUser = await _userManager.FindByEmailAsync(request.Email);
+        if (existingUser != null)
+            throw new BadRequestException("Bu email adresi zaten kullanımda.");
+
         if (!await _roleManager.RoleExistsAsync("User"))
             await _roleManager.CreateAsync(new IdentityRole("User"));
 
@@ -36,10 +41,10 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, s
         if (result.Succeeded)
         {
             await _userManager.AddToRoleAsync(user, "User");
-            return "Kullanıcı başarıyla oluşturuldu ve 'User' rolü atandı!";
+            return "Kullanıcı başarıyla oluşturuldu!";
         }
 
         var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-        throw new Exception($"Kayıt başarısız: {errors}");
+        throw new BadRequestException($"Kayıt başarısız: {errors}");
     }
 }

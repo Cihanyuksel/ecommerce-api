@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Auth.Application.Features.Auth.Commands.LoginUser;
 using Auth.Application.Interfaces;
 using Auth.Domain.Entities;
+using Auth.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
@@ -24,12 +25,12 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         var email = principal.FindFirstValue(ClaimTypes.Email);
 
         if (email == null)
-            throw new Exception("Geçersiz Access Token!");
+            throw new UnauthorizedException("Geçersiz Access Token!");
 
         var user = await _userManager.FindByEmailAsync(email);
 
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            throw new Exception("Geçersiz veya süresi dolmuş Refresh Token! Lütfen tekrar giriş yapın.");
+            throw new UnauthorizedException("Geçersiz veya süresi dolmuş Refresh Token! Lütfen tekrar giriş yapın.");
 
         var newAccessToken = _tokenService.GenerateAccessToken(principal.Claims);
         var newRefreshToken = _tokenService.GenerateRefreshToken();

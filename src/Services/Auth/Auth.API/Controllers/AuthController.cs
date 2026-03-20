@@ -1,7 +1,9 @@
 using Auth.Application.Features.Auth.Commands.LoginUser;
+using Auth.Application.Features.Auth.Commands.LogoutUser;
 using Auth.Application.Features.Auth.Commands.RefreshToken;
 using Auth.Application.Features.Auth.Commands.RegisterUser;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth.API.Controllers;
@@ -36,5 +38,13 @@ public class AuthController : ControllerBase
     {
         var result = await _mediator.Send(command);
         return Ok(result);
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout([FromBody] LogoutUserCommand command)
+    {
+        await _mediator.Send(command);
+        return Ok(new { message = "Çıkış başarılı!" });
     }
 }

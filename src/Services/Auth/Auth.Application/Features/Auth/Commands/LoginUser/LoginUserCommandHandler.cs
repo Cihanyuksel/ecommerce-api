@@ -1,21 +1,22 @@
 using System.Security.Claims;
-using Auth.Application.Interfaces; 
+using Auth.Application.Interfaces;
 using Auth.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using System.IdentityModel.Tokens.Jwt;
+using Auth.Domain.Exceptions;
 
 namespace Auth.Application.Features.Auth.Commands.LoginUser;
 
 public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, AuthResponse>
 {
     private readonly UserManager<AppUser> _userManager;
-    private readonly ITokenService _tokenService; 
+    private readonly ITokenService _tokenService;
 
-    public LoginUserCommandHandler(UserManager<AppUser> userManager, ITokenService tokenService) 
+    public LoginUserCommandHandler(UserManager<AppUser> userManager, ITokenService tokenService)
     {
         _userManager = userManager;
-        _tokenService = tokenService; 
+        _tokenService = tokenService;
     }
 
     public async Task<AuthResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
@@ -23,9 +24,7 @@ public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, AuthRes
         var user = await _userManager.FindByEmailAsync(request.Email);
 
         if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-        {
-            throw new Exception("Email veya şifre hatalı!");
-        }
+            throw new UnauthorizedException("Email veya şifre hatalı!");
 
         var userRoles = await _userManager.GetRolesAsync(user);
 
@@ -48,6 +47,6 @@ public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, AuthRes
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         await _userManager.UpdateAsync(user);
 
-        return new AuthResponse(accessToken, refreshToken); 
+        return new AuthResponse(accessToken, refreshToken);
     }
 }
