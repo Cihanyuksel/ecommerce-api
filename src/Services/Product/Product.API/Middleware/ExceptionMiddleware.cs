@@ -36,12 +36,14 @@ public class ExceptionMiddleware
 
         var logLevel = ex switch
         {
-            NotFoundException => AppLogLevel.Warning,
-            ValidationException => AppLogLevel.Error,
+            NotFoundException => AppLogLevel.Error,
+            BadRequestException => AppLogLevel.Error,
+            ValidationException => AppLogLevel.Warning,
             _ => AppLogLevel.Error
         };
 
         var publishEndpoint = context.RequestServices.GetRequiredService<IPublishEndpoint>();
+
         await publishEndpoint.Publish(new LogEventMessage
         {
             ServiceName = "Product.API",
@@ -56,6 +58,7 @@ public class ExceptionMiddleware
         var statusCode = ex switch
         {
             NotFoundException => HttpStatusCode.NotFound,
+            BadRequestException => HttpStatusCode.BadRequest,
             ValidationException => HttpStatusCode.BadRequest,
             _ => HttpStatusCode.InternalServerError
         };

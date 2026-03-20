@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces.Repositories;
 using Product.Application.Events;
 using Product.Domain.Exceptions;
+using Shared.Events;
 
 namespace Product.Application.Features.Products.Commands.DeleteProduct;
 
@@ -33,6 +34,14 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
 
         await _publishEndpoint.Publish(new ProductDeletedEvent { Id = product.Id }, cancellationToken);
 
+        //INFO
+        await _publishEndpoint.Publish(new LogEventMessage
+        {
+            ServiceName = "Product.API",
+            LogLevel = AppLogLevel.Info,
+            Message = $"Ürün silindi: {product.Name} (ID: {product.Id})",
+            Timestamp = DateTime.UtcNow
+        }, cancellationToken);
         return true;
     }
 }

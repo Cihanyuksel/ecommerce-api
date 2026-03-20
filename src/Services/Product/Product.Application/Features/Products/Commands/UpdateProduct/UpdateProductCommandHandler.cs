@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Product.Application.Interfaces.Repositories;
 using Product.Application.Events;
 using Product.Domain.Exceptions;
+using Shared.Events;
 
 namespace Product.Application.Features.Products.Commands.UpdateProduct;
 
@@ -41,6 +42,15 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             Name = product.Name,
             Price = product.Price,
             Stock = product.Stock
+        }, cancellationToken);
+
+        //INFO
+        await _publishEndpoint.Publish(new LogEventMessage
+        {
+            ServiceName = "Product.API",
+            LogLevel = AppLogLevel.Info,
+            Message = $"Ürün güncellendi: {product.Name} (ID: {product.Id})",
+            Timestamp = DateTime.UtcNow
         }, cancellationToken);
 
         return true;

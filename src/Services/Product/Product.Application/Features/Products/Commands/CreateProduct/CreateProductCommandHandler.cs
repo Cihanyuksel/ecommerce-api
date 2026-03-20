@@ -25,11 +25,9 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
     {
         var newProduct = new ProductEntity
         {
-            Id = Guid.NewGuid(),
             Name = request.Name,
             Price = request.Price,
             Stock = request.Stock,
-            CreatedAt = DateTime.UtcNow
         };
 
         await _repository.AddAsync(newProduct, cancellationToken);
