@@ -1,3 +1,7 @@
+using Log.API.Consumers;
+using MassTransit;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
 Serilog.Log.Logger = new LoggerConfiguration()

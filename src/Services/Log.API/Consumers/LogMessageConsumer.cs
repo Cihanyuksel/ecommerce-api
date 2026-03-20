@@ -1,3 +1,5 @@
+using MassTransit;
+using Shared.Events;
 namespace Log.API.Consumers;
 
 public class LogMessageConsumer : IConsumer<LogEventMessage>
